@@ -1,0 +1,13 @@
+#locale
+*.log
+*.tmp
+
+#midia/locale
+wallpapers/
+videos/
+*.mp4
+*.mkv
+*.webpm
+*.png
+*.jpg
+*.jpeg

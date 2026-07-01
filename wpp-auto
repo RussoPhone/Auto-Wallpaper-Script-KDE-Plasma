@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+BASE="$HOME/Imagens/wpp"
+
+T1_SCREEN=0
+T2_SCREEN=1
+
+QDBUS="$(command -v qdbus6 || command -v qdbus || true)"
+
+if [[ -z "$QDBUS" ]]; then
+	notify-send "wpp" "qdbus6/qdbus nf. -S qt6-tools."
+	exit 1
+fi
+
+hour="$(date +%H)"
+
+if (( 10#$hour >= 6 && 10#$hour < 18 )); then
+	period="d"
+else
+	period="n"
+fi
+
+pick_random_wallpaper() {
+	local folder="$1"
+
+	find "$folder" -maxdepth 1 -type f \
+	\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) \
+	| shuf -n 1
+}
+
+escape_js_string() {
+	sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+set_wallpaper_for_screen() {
+	local screen="$1"
+	local image="$2"
+	local image_uri
+	local image_js
+	local plasma_script
+
+	image_uri="file://$image"
+	image_js="$(printf '%s' "$image_uri" | escape_js_string)"
+
+	plasma_script="
+var desktopsArray = desktops();
+
+for (var i = 0; i < desktopsArray.length; i++) {
+	var d = desktopsArray[i];
+
+	if (d.screen == $screen) {
+	d.wallpaperPlugin = 'org.kde.image';
+	d.currentConfigGroup = ['Wallpaper', 'org.kde.image', 'General'];
+	d.writeConfig('Image', \"$image_js\");
+	}
+}
+"
+
+	"$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$plasma_script" >/dev/null
+}
+
+wallpaper_t1="$(pick_random_wallpaper "$BASE/t1/$period")"
+wallpaper_t2="$(pick_random_wallpaper "$BASE/t2/$period")"
+
+if [[ -z "$wallpaper_t1" ]]; then
+	notify-send "Wallpaper" "Não foi encontrado wallpaper em $BASE/t1/$period"
+	exit 1
+fi
+
+if [[ -z "$wallpaper_t2" ]]; then
+	notify-send "Wallpaper" "Não foi encontrado wallpaper em $BASE/t2/$period"
+	exit 1
+fi
+
+set_wallpaper_for_screen "$T1_SCREEN" "$wallpaper_t1"
+set_wallpaper_for_screen "$T2_SCREEN" "$wallpaper_t2"
+
+notify-send "Wallpaper" "Período: $period" 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
